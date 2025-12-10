@@ -453,8 +453,8 @@ export default function App() {
     if (!user || !tripId) return;
     setLoading(true);
 
-    // 使用標準 collection 路徑
-    const itineraryRef = collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_itinerary`);
+    // 使用 tripId 作為資料路徑，這樣刷新後資料仍然保留
+    const itineraryRef = collection(db, 'artifacts', appId, 'trips', tripId, 'itinerary');
     const unsubItinerary = onSnapshot(itineraryRef, (snapshot) => {
       const loadedDays = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       loadedDays.sort((a, b) => a.day - b.day);
@@ -462,20 +462,20 @@ export default function App() {
       setLoading(false);
     }, (error) => console.error("Error fetching itinerary:", error));
 
-    const todoRef = collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_todos`);
+    const todoRef = collection(db, 'artifacts', appId, 'trips', tripId, 'todos');
     const unsubTodos = onSnapshot(todoRef, (snapshot) => {
       const loadedTodos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setTodos(loadedTodos);
     }, (error) => console.error("Error fetching todos:", error));
 
-    const flightRef = collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_flights`);
+    const flightRef = collection(db, 'artifacts', appId, 'trips', tripId, 'flights');
     const unsubFlights = onSnapshot(flightRef, (snapshot) => {
       const loadedFlights = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       loadedFlights.sort((a, b) => a.day - b.day);
       setFlights(loadedFlights);
     }, (error) => console.error("Error fetching flights:", error));
 
-    const stayRef = collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_accommodations`);
+    const stayRef = collection(db, 'artifacts', appId, 'trips', tripId, 'accommodations');
     const unsubStays = onSnapshot(stayRef, (snapshot) => {
       const loadedStays = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       loadedStays.sort((a, b) => a.day - b.day);
@@ -495,12 +495,12 @@ export default function App() {
     setLoading(true);
     try {
       const deletePromises = days.map(d =>
-        deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_itinerary`, d.id))
+        deleteDoc(doc(db, 'artifacts', appId, 'trips', tripId, 'itinerary', d.id))
       );
       await Promise.all(deletePromises);
 
       const addPromises = DEFAULT_ITINERARY.map(item =>
-        addDoc(collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_itinerary`), item)
+        addDoc(collection(db, 'artifacts', appId, 'trips', tripId, 'itinerary'), item)
       );
       await Promise.all(addPromises);
       showToast("行程已成功重置！", "success");
@@ -514,7 +514,7 @@ export default function App() {
 
   const handleUpdateDay = async () => {
     if (!editingDay) return;
-    const ref = doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_itinerary`, editingDay.id);
+    const ref = doc(db, 'artifacts', appId, 'trips', tripId, 'itinerary', editingDay.id);
     const cleanData = {
       ...editForm,
       day: Number(editForm.day) || days.length + 1,
@@ -541,28 +541,28 @@ export default function App() {
       activityCost: 0,
       booked: false
     };
-    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_itinerary`), newDay);
+    await addDoc(collection(db, 'artifacts', appId, 'trips', tripId, 'itinerary'), newDay);
     showToast("已新增一天行程", "success");
   };
 
   const executeDeleteDay = async (id) => {
-    await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_itinerary`, id));
+    await deleteDoc(doc(db, 'artifacts', appId, 'trips', tripId, 'itinerary', id));
     setEditingDay(null);
     setDeletingDayId(null);
     showToast("已刪除該日行程", "info");
   };
 
   const handleAddFlight = async () => {
-    const ref = collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_flights`);
+    const ref = collection(db, 'artifacts', appId, 'trips', tripId, 'flights');
     await addDoc(ref, { day: 1, origin: '', destination: '', details: '', price: 0, createdAt: Date.now() });
     showToast("已新增航班卡片", "success");
   };
   const handleUpdateFlight = async (id, data) => {
-    const ref = doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_flights`, id);
+    const ref = doc(db, 'artifacts', appId, 'trips', tripId, 'flights', id);
     await setDoc(ref, data, { merge: true });
   };
   const handleDeleteFlight = async (id) => {
-    const ref = doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_flights`, id);
+    const ref = doc(db, 'artifacts', appId, 'trips', tripId, 'flights', id);
     await deleteDoc(ref);
     showToast("已刪除航班卡片", "info");
   };
@@ -572,7 +572,7 @@ export default function App() {
       showToast(`找不到 Day ${flight.day} 的行程！`, "error");
       return;
     }
-    const ref = doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_itinerary`, targetDay.id);
+    const ref = doc(db, 'artifacts', appId, 'trips', tripId, 'itinerary', targetDay.id);
     await setDoc(ref, {
       transportType: 'Flight',
       transportDetail: flight.details || `${flight.origin} -> ${flight.destination}`,
@@ -582,16 +582,16 @@ export default function App() {
   };
 
   const handleAddAccommodation = async () => {
-    const ref = collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_accommodations`);
+    const ref = collection(db, 'artifacts', appId, 'trips', tripId, 'accommodations');
     await addDoc(ref, { day: 1, nights: 1, location: '', name: '', price: 0, createdAt: Date.now() });
     showToast("已新增住宿卡片", "success");
   };
   const handleUpdateAccommodation = async (id, data) => {
-    const ref = doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_accommodations`, id);
+    const ref = doc(db, 'artifacts', appId, 'trips', tripId, 'accommodations', id);
     await setDoc(ref, data, { merge: true });
   };
   const handleDeleteAccommodation = async (id) => {
-    const ref = doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_accommodations`, id);
+    const ref = doc(db, 'artifacts', appId, 'trips', tripId, 'accommodations', id);
     await deleteDoc(ref);
     showToast("已刪除住宿卡片", "info");
   };
@@ -605,7 +605,7 @@ export default function App() {
       const targetDayNum = startDay + i;
       const targetDay = days.find(d => d.day === targetDayNum);
       if (targetDay) {
-        const ref = doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_itinerary`, targetDay.id);
+        const ref = doc(db, 'artifacts', appId, 'trips', tripId, 'itinerary', targetDay.id);
         await setDoc(ref, {
           stayName: stay.name || '已預訂住宿',
           stayCost: Math.round(costPerNight)
@@ -972,7 +972,7 @@ export default function App() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if (!newTodo.trim()) return;
-                addDoc(collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_todos`), { text: newTodo, completed: false, createdAt: Date.now() });
+                addDoc(collection(db, 'artifacts', appId, 'trips', tripId, 'todos'), { text: newTodo, completed: false, createdAt: Date.now() });
                 setNewTodo('');
                 showToast("已新增待辦事項", "success");
               }} className="flex gap-3">
@@ -1003,7 +1003,7 @@ export default function App() {
             {todos.map(todo => (
               <div key={todo.id} className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm mb-3">
                 <button
-                  onClick={() => setDoc(doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_todos`, todo.id), { completed: !todo.completed }, { merge: true })}
+                  onClick={() => setDoc(doc(db, 'artifacts', appId, 'trips', tripId, 'todos', todo.id), { completed: !todo.completed }, { merge: true })}
                   className={`p-1 rounded-full transition ${todo.completed ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`}
                 >
                   <CheckCircle2 className="w-6 h-6" fill={todo.completed ? "currentColor" : "none"} />
@@ -1011,7 +1011,7 @@ export default function App() {
                 <span className={`flex-1 ${todo.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
                   {todo.text}
                 </span>
-                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_todos`, todo.id))} className="text-gray-300 hover:text-red-500 p-2">
+                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'trips', tripId, 'todos', todo.id))} className="text-gray-300 hover:text-red-500 p-2">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
