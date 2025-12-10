@@ -760,7 +760,7 @@ export default function App() {
                       <label className="text-xs font-bold text-gray-400">內容</label>
                       <textarea className="w-full text-sm border rounded p-2 mt-1 h-20" value={editForm.content} onChange={e => setEditForm({ ...editForm, content: e.target.value })} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-3 gap-4 mb-4">
                       <div>
                         <label className="text-xs font-bold text-gray-400">住宿費</label>
                         <input type="number" className="w-full border rounded p-1 text-sm" value={editForm.stayCost} onChange={e => setEditForm({ ...editForm, stayCost: e.target.value })} />
@@ -768,6 +768,10 @@ export default function App() {
                       <div>
                         <label className="text-xs font-bold text-gray-400">交通費</label>
                         <input type="number" className="w-full border rounded p-1 text-sm" value={editForm.transportCost} onChange={e => setEditForm({ ...editForm, transportCost: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-400">活動費</label>
+                        <input type="number" className="w-full border rounded p-1 text-sm" value={editForm.activityCost} onChange={e => setEditForm({ ...editForm, activityCost: e.target.value })} />
                       </div>
                     </div>
 
