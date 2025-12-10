@@ -972,7 +972,7 @@ export default function App() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if (!newTodo.trim()) return;
-                addDoc(collection(db, 'artifacts', appId, 'public', 'data', `${tripId}_todos`), { text: newTodo, completed: false, createdAt: Date.now() });
+                addDoc(collection(db, 'artifacts', appId, 'users', user.uid, `${tripId}_todos`), { text: newTodo, completed: false, createdAt: Date.now() });
                 setNewTodo('');
                 showToast("已新增待辦事項", "success");
               }} className="flex gap-3">
@@ -1003,7 +1003,7 @@ export default function App() {
             {todos.map(todo => (
               <div key={todo.id} className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm mb-3">
                 <button
-                  onClick={() => setDoc(doc(db, 'artifacts', appId, 'public', 'data', `${tripId}_todos`, todo.id), { completed: !todo.completed }, { merge: true })}
+                  onClick={() => setDoc(doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_todos`, todo.id), { completed: !todo.completed }, { merge: true })}
                   className={`p-1 rounded-full transition ${todo.completed ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`}
                 >
                   <CheckCircle2 className="w-6 h-6" fill={todo.completed ? "currentColor" : "none"} />
@@ -1011,7 +1011,7 @@ export default function App() {
                 <span className={`flex-1 ${todo.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
                   {todo.text}
                 </span>
-                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `${tripId}_todos`, todo.id))} className="text-gray-300 hover:text-red-500 p-2">
+                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, `${tripId}_todos`, todo.id))} className="text-gray-300 hover:text-red-500 p-2">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
