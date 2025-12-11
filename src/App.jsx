@@ -731,9 +731,7 @@ export default function App() {
         {/* Itinerary List */}
         {activeTab === 'itinerary' && (
           <div className="space-y-4 pb-10">
-            <div className="flex justify-end">
-              <button onClick={initializeData} className="text-xs text-gray-300 hover:text-red-400 flex items-center gap-1"><RefreshCw className="w-3 h-3" /> 重置</button>
-            </div>
+
 
             {days.length > 0 && days.map((day) => (
               <div key={day.id} className="flex gap-4 items-start">
