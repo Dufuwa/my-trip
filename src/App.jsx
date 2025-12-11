@@ -545,6 +545,24 @@ export default function App() {
     showToast("已新增一天行程", "success");
   };
 
+  // 修復天數順序 - 將所有天數從 1 開始重新編號
+  const fixDayNumbers = async () => {
+    if (days.length === 0) return;
+
+    const sortedDays = [...days].sort((a, b) => a.day - b.day);
+    const updatePromises = sortedDays.map((day, index) => {
+      const newDayNumber = index + 1;
+      if (day.day !== newDayNumber) {
+        return setDoc(doc(db, 'artifacts', appId, 'trips', tripId, 'itinerary', day.id),
+          { day: newDayNumber },
+          { merge: true }
+        );
+      }
+      return Promise.resolve();
+    });
+    await Promise.all(updatePromises);
+    showToast("天數順序已修復！", "success");
+  };
   const executeDeleteDay = async (id) => {
     // 找到要刪除的日期
     const deletedDay = days.find(d => d.id === id);
@@ -752,6 +770,18 @@ export default function App() {
         {activeTab === 'itinerary' && (
           <div className="space-y-4 pb-10">
 
+            {/* 顯示修復按鈕：當第一天不是 Day 1 時 */}
+            {days.length > 0 && days.sort((a, b) => a.day - b.day)[0]?.day !== 1 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex justify-between items-center">
+                <span className="text-yellow-700 text-sm">⚠️ 天數順序需要修復（目前從 Day {days.sort((a, b) => a.day - b.day)[0]?.day} 開始）</span>
+                <button
+                  onClick={fixDayNumbers}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-4 py-2 rounded-lg font-bold transition"
+                >
+                  修復天數順序
+                </button>
+              </div>
+            )}
 
             {days.length > 0 && days.map((day) => (
               <div key={day.id} className="flex gap-4 items-start">
