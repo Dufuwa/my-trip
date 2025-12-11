@@ -546,10 +546,30 @@ export default function App() {
   };
 
   const executeDeleteDay = async (id) => {
+    // 找到要刪除的日期
+    const deletedDay = days.find(d => d.id === id);
+    if (!deletedDay) return;
+
+    // 刪除該日
     await deleteDoc(doc(db, 'artifacts', appId, 'trips', tripId, 'itinerary', id));
+
+    // 重新編號剩餘的日期
+    const remainingDays = days.filter(d => d.id !== id).sort((a, b) => a.day - b.day);
+    const updatePromises = remainingDays.map((day, index) => {
+      const newDayNumber = index + 1;
+      if (day.day !== newDayNumber) {
+        return setDoc(doc(db, 'artifacts', appId, 'trips', tripId, 'itinerary', day.id),
+          { day: newDayNumber },
+          { merge: true }
+        );
+      }
+      return Promise.resolve();
+    });
+    await Promise.all(updatePromises);
+
     setEditingDay(null);
     setDeletingDayId(null);
-    showToast("已刪除該日行程", "info");
+    showToast("已刪除該日行程，天數已重新排序", "info");
   };
 
   const handleAddFlight = async () => {
