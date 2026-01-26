@@ -684,11 +684,11 @@ export default function App() {
       <div className="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white px-6 py-8">
         <h1 className="text-3xl font-bold flex items-center gap-3 mb-2">
           <Plane className="w-8 h-8 fill-white" />
-          北歐追光之旅 2027
+          歐洲之旅 2027
         </h1>
         <p className="text-cyan-100 text-sm mb-8 pl-1 flex items-center gap-2">
           <Sun className="w-4 h-4" />
-          挪威峽灣・冰島環島・荷蘭花季
+          歐洲之旅
         </p>
 
         {/* TRIP CODE and TOTAL BUDGET Box */}
