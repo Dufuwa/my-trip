@@ -792,9 +792,15 @@ export default function App() {
 
                 {editingDay?.id === day.id ? (
                   <div className="flex-1 bg-white rounded-2xl shadow-lg p-5 border-2 border-blue-100 z-10">
-                    <div className="mb-4">
-                      <label className="text-xs font-bold text-gray-400 block mb-1">日期天數 (Day)</label>
-                      <input className="w-20 font-black text-xl border-b border-gray-200 focus:border-blue-500 outline-none py-1" type="number" value={editForm.day} onChange={e => setEditForm({ ...editForm, day: e.target.value })} />
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="text-xs font-bold text-gray-400 block mb-1">日期天數 (Day)</label>
+                        <input className="w-20 font-black text-xl border-b border-gray-200 focus:border-blue-500 outline-none py-1" type="number" value={editForm.day} onChange={e => setEditForm({ ...editForm, day: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-400 block mb-1">標籤 (如: Norway, Day Trip)</label>
+                        <input className="w-full font-bold text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-1 uppercase" value={editForm.country || ''} onChange={e => setEditForm({ ...editForm, country: e.target.value })} placeholder="輸入標籤..." />
+                      </div>
                     </div>
                     <div className="mb-4">
                       <label className="text-xs font-bold text-gray-400">標題</label>
@@ -861,11 +867,11 @@ export default function App() {
                   >
                     {/* Country Tag and Location */}
                     <div className="flex items-center gap-3 mb-3">
-                      <span className={`text-xs font-bold text-white px-2 py-1 rounded uppercase ${day.country === 'Norway' ? 'bg-blue-500' :
-                        day.country === 'Iceland' ? 'bg-cyan-500' : 'bg-orange-500'
-                        }`}>
-                        {day.country === 'Norway' ? 'NORWAY' : day.country === 'Iceland' ? 'ICELAND' : 'NETHERLANDS'}
-                      </span>
+                      {day.country && (
+                        <span className="text-xs font-bold text-white px-2 py-1 rounded uppercase bg-blue-500">
+                          {day.country}
+                        </span>
+                      )}
                       <span className="text-gray-400 text-sm flex items-center gap-1">
                         <MapPin className="w-3 h-3" /> {day.location.split(' ')[0]}
                       </span>
