@@ -242,6 +242,58 @@ const DEFAULT_ITINERARY = [
   },
 ];
 
+// --- IME-aware Input Component for Chinese/Japanese/Korean input ---
+const IMEInput = ({ value, onChange, className, placeholder, type = 'text', ...props }) => {
+  const [localValue, setLocalValue] = React.useState(value || '');
+  const isComposing = React.useRef(false);
+
+  // 當外部 value 改變時更新本地 state
+  React.useEffect(() => {
+    if (!isComposing.current) {
+      setLocalValue(value || '');
+    }
+  }, [value]);
+
+  const handleChange = (e) => {
+    setLocalValue(e.target.value);
+    // 只在非組字狀態時才觸發外部 onChange
+    if (!isComposing.current) {
+      onChange(e);
+    }
+  };
+
+  const handleCompositionStart = () => {
+    isComposing.current = true;
+  };
+
+  const handleCompositionEnd = (e) => {
+    isComposing.current = false;
+    // 組字完成後，觸發 onChange
+    onChange(e);
+  };
+
+  const handleBlur = (e) => {
+    // blur 時確保儲存
+    if (localValue !== value) {
+      onChange({ target: { value: localValue } });
+    }
+  };
+
+  return (
+    <input
+      type={type}
+      className={className}
+      placeholder={placeholder}
+      value={localValue}
+      onChange={handleChange}
+      onCompositionStart={handleCompositionStart}
+      onCompositionEnd={handleCompositionEnd}
+      onBlur={handleBlur}
+      {...props}
+    />
+  );
+};
+
 // --- Sub-Components ---
 
 const FlightCard = ({ flight, onDelete, onUpdate, onSync, days }) => {
@@ -281,21 +333,21 @@ const FlightCard = ({ flight, onDelete, onUpdate, onSync, days }) => {
 
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-2">
-          <input
+          <IMEInput
             className="font-bold text-lg text-gray-800 w-1/3 border-b border-dashed border-gray-300 focus:border-blue-500 outline-none placeholder-gray-300 bg-transparent"
             placeholder="起點 (如: TPE)"
             value={flight.origin}
             onChange={(e) => onUpdate(flight.id, { origin: e.target.value })}
           />
           <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <input
+          <IMEInput
             className="font-bold text-lg text-gray-800 w-1/3 border-b border-dashed border-gray-300 focus:border-blue-500 outline-none placeholder-gray-300 bg-transparent"
             placeholder="終點 (如: OSL)"
             value={flight.destination}
             onChange={(e) => onUpdate(flight.id, { destination: e.target.value })}
           />
         </div>
-        <input
+        <IMEInput
           type="text"
           placeholder="航班備註 (如: 華航 CI074...)"
           className="w-full mt-2 p-3 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
@@ -371,7 +423,7 @@ const AccommodationCard = ({ stay, onDelete, onUpdate, onSync }) => {
       </div>
 
       <div className="mb-4">
-        <input
+        <IMEInput
           className="font-bold text-xl text-gray-800 w-full border-none focus:ring-0 outline-none placeholder-gray-300 mb-1"
           placeholder="輸入地點 (如: Oslo, Norway)"
           value={stay.location}
@@ -388,7 +440,7 @@ const AccommodationCard = ({ stay, onDelete, onUpdate, onSync }) => {
       </div>
 
       <div className="mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100">
-        <input
+        <IMEInput
           type="text"
           placeholder="輸入住宿名稱或連結 (如: City Apartment...)"
           className="w-full bg-transparent text-sm focus:outline-none text-gray-700"
@@ -397,23 +449,31 @@ const AccommodationCard = ({ stay, onDelete, onUpdate, onSync }) => {
         />
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 flex-1 border border-gray-200 rounded-lg px-3 py-2">
-          <span className="text-gray-400 text-sm font-medium">總價:</span>
-          <input
-            type="number"
-            className="w-full outline-none text-gray-800 font-bold"
-            placeholder="0"
-            value={stay.price || ''}
-            onChange={(e) => onUpdate(stay.id, { price: e.target.value })}
-          />
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 border border-gray-200 rounded-lg px-3 py-2">
+            <span className="text-gray-400 text-sm font-medium">總價:</span>
+            <input
+              type="number"
+              className="w-full outline-none text-gray-800 font-bold"
+              placeholder="0"
+              value={stay.price || ''}
+              onChange={(e) => onUpdate(stay.id, { price: e.target.value })}
+            />
+          </div>
+          <button
+            onClick={() => onSync(stay)}
+            className="bg-gray-800 hover:bg-black text-white text-sm font-bold px-6 py-2 rounded-lg shadow-sm transition flex items-center gap-1 whitespace-nowrap"
+          >
+            同步至行程與預算
+          </button>
         </div>
-        <button
-          onClick={() => onSync(stay)}
-          className="bg-gray-800 hover:bg-black text-white text-sm font-bold px-6 py-2 rounded-lg shadow-sm transition flex items-center gap-1 whitespace-nowrap"
-        >
-          同步至行程與預算
-        </button>
+        {/* 顯示每晚攤提費用 */}
+        {(stay.price && stay.nights) ? (
+          <div className="text-right text-sm text-gray-500">
+            每晚約 <span className="font-bold text-gray-700">${Math.round(Number(stay.price) / (stay.nights || 1)).toLocaleString()}</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -621,7 +681,18 @@ export default function App() {
 
   const handleAddAccommodation = async () => {
     const ref = collection(db, 'artifacts', appId, 'trips', tripId, 'accommodations');
-    await addDoc(ref, { day: 1, nights: 1, location: '', name: '', price: 0, createdAt: Date.now() });
+    // 計算新住宿的起始日：從最後一個住宿結束的那天開始
+    let nextStartDay = 1;
+    if (accommodations.length > 0) {
+      // 找到結束日期最晚的住宿
+      const lastAccommodation = accommodations.reduce((latest, current) => {
+        const latestEndDay = (latest.day || 1) + (latest.nights || 1);
+        const currentEndDay = (current.day || 1) + (current.nights || 1);
+        return currentEndDay > latestEndDay ? current : latest;
+      });
+      nextStartDay = (lastAccommodation.day || 1) + (lastAccommodation.nights || 1);
+    }
+    await addDoc(ref, { day: nextStartDay, nights: 1, location: '', name: '', price: 0, createdAt: Date.now() });
     showToast("已新增住宿卡片", "success");
   };
   const handleUpdateAccommodation = async (id, data) => {
